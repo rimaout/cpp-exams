@@ -1,3 +1,5 @@
+.DS_Store
+
 # Vim swap and undo files
 *~
 *.un~
