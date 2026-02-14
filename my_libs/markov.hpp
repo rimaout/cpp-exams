@@ -3,9 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <random>
 #include <stdexcept>
-#include <ctime>
 
 #include "my_random.hpp"
 
@@ -41,9 +39,6 @@ private:
     /// Adjacency list mapping: Node ID -> List of outgoing Edges
     map<int, vector<Edge>> adjacent_list; 
     
-    /// The random number engine used for probability distribution
-    urng_t rand_engine;
-
 public:
     
     /**
@@ -52,9 +47,6 @@ public:
      * * @param transitions A vector of Transition structs defining the graph topology.
      */
     MarkovChain(const vector<Transition>& transitions) {
-        
-        rand_engine = pseudo_random_engine_from_device();
-
         for (const Transition& t : transitions) {
             Edge edge {t.to, t.probability, t.cost};
             adjacent_list[t.from].push_back(edge);
@@ -91,15 +83,7 @@ public:
             weights.push_back(edge.probability);
         }
 
-        // Create distribution based on weights (discrete_distribution normalizes weights automatically)
-        discrete_distribution<int> dist(weights.begin(), weights.end());    
-        /**
-         * Note:
-         *  - We pass the begin and end iterators of the weights vector to the discrete_distribution constructor.
-         *  - It's like passing the whole vector.
-         */
-
-        int index = dist(rand_engine);
+        int index = Random::getDiscrete(weights); // Get a random index based on the weights
         return edges[index].to;
     }
 

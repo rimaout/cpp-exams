@@ -17,7 +17,7 @@ using namespace std;
 #define START_NODE 0
 #define END_NODE (num_of_nodes - 1)
 
-int read_input_file(const string filename, int& num_of_nodes, vector<Transition>& transition_list);
+int read_input_file(const string filename, int& num_of_nodes, vector<Transition>& transition_list, double& C);
 int write_output_file(const string filename, double result);
 
 int main() {
@@ -25,39 +25,47 @@ int main() {
     // - READ INPUT FILE AND PARSE DATA
     int num_of_nodes = 0;
     vector<Transition> transition_list;
+    double max_C = 0;
     
-    if (read_input_file("parameters.txt", num_of_nodes, transition_list) != EXIT_SUCCESS) {
+    if (read_input_file("parameters.txt", num_of_nodes, transition_list, max_C) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
+
+    printf("Max cost: %.2f\n", max_C);
 
     // - INITIALIZE MARKOV CHAIN
     MarkovChain markovChain = MarkovChain(transition_list);
 
     // - RUN SIMULATION
-    double total_cost = 0.0;
+    int num_successes = 0;
 
     for (int i = 0; i < NUM_SIMULATIONS; i++) {
+        double sim_cost = 0;
         int current_node = START_NODE;
 
         while (current_node != END_NODE) {
             int next_node = markovChain.get_next_node(current_node);
-            total_cost += markovChain.get_transition_cost(current_node, next_node);
+            sim_cost += markovChain.get_transition_cost(current_node, next_node);
             current_node = next_node;
         }
+
+        if (sim_cost <= max_C) {
+            num_successes += 1;
+        }
     }
-    
-    double average_cost = total_cost / NUM_SIMULATIONS;
+
+    double success_rate = (double) num_successes / NUM_SIMULATIONS;
 
     // - SAVE OUTPUT TO FILE
-    if (write_output_file("results.txt", average_cost) != EXIT_SUCCESS) {
+    if (write_output_file("results.txt", success_rate) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
 
-    cout << "Result: C " << average_cost << endl;
+    cout << "Result: P " << success_rate << endl;
     return EXIT_SUCCESS;   
 }
 
-int read_input_file(const string filename, int& num_of_nodes, vector<Transition>& transition_list) {
+int read_input_file(const string filename, int& num_of_nodes, vector<Transition>& transition_list, double& C) {
     ifstream inputFile(filename);
 
     if (!inputFile.is_open()) {
@@ -67,7 +75,11 @@ int read_input_file(const string filename, int& num_of_nodes, vector<Transition>
 
     char lineType;
     while (inputFile >> lineType) {
-        if (lineType == 'N') {
+        if (lineType == 'C') {
+            // Read the cost value (not used in this implementation, but can be stored if needed)
+            inputFile >> C;
+        }
+        else if (lineType == 'N') {
             inputFile >> num_of_nodes;
         } 
         else if (lineType == 'A') {
@@ -89,7 +101,7 @@ int write_output_file(const string filename, double result) {
     }
 
     outputFile << EXAM_DATE << "-" << STUDENTE_INFO << endl;
-    outputFile << "C " << result << endl;
+    outputFile << "P " << result << endl;
     outputFile.close();
     return EXIT_SUCCESS;
 }
