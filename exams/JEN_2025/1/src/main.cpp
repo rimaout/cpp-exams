@@ -4,6 +4,7 @@
 #include <string>
 
 #include "markov.hpp"
+#include "accumulator_statistics.hpp"
 
 using namespace std;
 
@@ -34,19 +35,22 @@ int main() {
     MarkovChain markovChain = MarkovChain(transition_list);
 
     // - RUN SIMULATION
-    double total_cost = 0.0;
+    AccumulatorStatistics simulationsAccumulator;
 
     for (int i = 0; i < NUM_SIMULATIONS; i++) {
+        double sim_cost = 0.0;
         int current_node = START_NODE;
 
         while (current_node != END_NODE) {
             int next_node = markovChain.get_next_node(current_node);
-            total_cost += markovChain.get_transition_cost(current_node, next_node);
+            sim_cost += markovChain.get_transition_cost(current_node, next_node);
             current_node = next_node;
         }
+        
+        simulationsAccumulator.add(sim_cost);
     }
     
-    double average_cost = total_cost / NUM_SIMULATIONS;
+    double average_cost = simulationsAccumulator.getMean();
 
     // - SAVE OUTPUT TO FILE
     if (write_output_file("results.txt", average_cost) != EXIT_SUCCESS) {
